@@ -63,12 +63,6 @@ const proto_pkg = std.build.Pkg{
     .dependencies = &[_]std.build.Pkg{},
 };
 
-const bitfield_pkg = std.build.Pkg{
-    .name = "bitfields",
-    .path = .{ .path = "src/lib/bitfields.zig" },
-    .dependencies = &[_]std.build.Pkg{},
-};
-
 const gdb_pkg = std.build.Pkg{
     .name = "gdb",
     .path = .{ .path = "src/lib/gdb.zig" },
@@ -135,7 +129,6 @@ fn buildClient(b: *std.build.Builder, target_arch: std.Target.Cpu.Arch) !void {
         .dependencies = &[_]std.build.Pkg{
             gdb_pkg,
             proto_pkg,
-            bitfield_pkg,
         },
     };
 
