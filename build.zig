@@ -132,7 +132,11 @@ fn buildClient(b: *std.build.Builder, target_arch: std.Target.Cpu.Arch) !void {
         },
     };
 
-    const client = b.addExecutable("client", "src/client/main.zig");
+    const client = b.addExecutable(
+        b.fmt("client_{s}", .{@tagName(target_arch)}),
+        "src/client/main.zig",
+    );
+
     client.setTarget(target);
     client.setBuildMode(mode);
     client.install();
