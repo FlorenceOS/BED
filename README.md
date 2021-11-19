@@ -1,5 +1,7 @@
 # Baremetal Embeddable Debugger
 
+[FlorenceOS discord server](https://discord.gg/uaXtZVku2E)
+
 ![UART Example screenshot](./examples/uart.png)
 
 A very small and simple debugger. It takes only a single RWX page and you can run it from anywhere where you have code execution and a way to send and recieve data (UART, USB, Network, whatever).
