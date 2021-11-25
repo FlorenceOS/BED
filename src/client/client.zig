@@ -377,6 +377,7 @@ fn handlePacket(pkt: []const u8, gdb_stream: *gdb.Stream) !void {
                 try device_writer.writeByte(b);
             }
         }
+        try gdb_stream.send("");
     }
 
     else if(std.mem.eql(u8, pkt, "g")) { // Read registers list
