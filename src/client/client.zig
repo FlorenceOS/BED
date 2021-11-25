@@ -299,7 +299,8 @@ fn handlePacket(pkt: []const u8, gdb_stream: *gdb.Stream) !void {
 
         var tries: usize = 0;
         while(tries < 5) {
-            try startMemoryRead(read_addr, @intCast(u32, size));
+            if(size > 0)
+                try startMemoryRead(read_addr, @intCast(u32, size));
             var session = try gdb_stream.startSendSession();
 
             var i: usize = 0;
@@ -359,7 +360,8 @@ fn handlePacket(pkt: []const u8, gdb_stream: *gdb.Stream) !void {
             return;
         };
 
-        try startMemoryWrite(write_addr, @intCast(u32, size));
+        if(size > 0)
+            try startMemoryWrite(write_addr, @intCast(u32, size));
 
         var i: usize = 0;
         if(read_in_binary) {
