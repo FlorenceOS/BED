@@ -255,7 +255,12 @@ pub fn install() void {
         : [evt] "r" (evt_base)
     );
 
-    doOsLock();
+    if(comptime(debugger_el < 3)) {
+        // We should only unlock the OS lock if
+        // we aren't on el3, as it's only needed for
+        // software stepping, and we can't do that in EL3
+        doOsLock();
+    }
     setupDebuggerRegs();
 
     // Enable debugging at ELd
