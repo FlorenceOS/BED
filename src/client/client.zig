@@ -429,6 +429,18 @@ fn handlePacket(pkt: []const u8, gdb_stream: *gdb.Stream) !void {
         try sendRegisters(gdb_stream, regnum, regnum);
     }
 
+    else if(std.mem.startsWith(u8, pkt, "P")) { // Write single register
+        const eql_idx = std.mem.indexOfScalar(u8, pkt, '=').?;
+        const regnum = try std.fmt.parseUnsigned(usize, pkt[1..eql_idx], 16);
+        const value = std.mem.bigToNative(u64, try std.fmt.parseUnsigned(u64, pkt[eql_idx + 1..], 16));
+
+        if(frame.?.writeGdbReg(regnum, value)) {
+            try gdb_stream.send("OK");
+        } else {
+            try gdb_stream.send("E00");
+        }
+    }
+
     else if (std.mem.startsWith(u8, pkt, "c") or std.mem.startsWith(u8, pkt, "s")) { // Continue and step
         try frame.?.doStep(std.mem.startsWith(u8, pkt, "s"));
 

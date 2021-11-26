@@ -364,6 +364,19 @@ pub const Frame = struct {
         return spsrSavedEl(self.debuggerRegs().SPSR.*);
     }
 
+    pub fn writeGdbReg(self: *@This(), regnum: usize, value: u64) bool {
+        if(regnum == 33) {
+            @panic("Handle writing to fake CPSR");
+        } else {
+            if(self.getGdbReg(regnum)) |reg| {
+                reg.* = value;
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
     // Get a register identified by "regnum" in target_xml
     pub fn getGdbReg(self: *@This(), regnum: usize) ?*u64 {
         return switch (regnum) {
