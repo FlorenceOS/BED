@@ -480,7 +480,7 @@ pub const Frame = struct {
         try gdb_stream.send(self.gdb_halt_message);
     }
 
-    fn hookAddrAtELWithInstr(self: *@This(), addr: u64, EL: u2, instr: [4]u8) !void {
+    fn hookWithInstrAtAddrForEL(self: *@This(), addr: u64, EL: u2, instr: [4]u8, save_callback: anytype) !void {
         // Make sure the address is writeable
         const our_addr = self.addrForOpAtEL(addr, EL, .w) catch |err| {
             std.log.err("Cannot write hook at address 0x{X} at EL{d}!! Cause: {}", .{ addr, EL, err });
@@ -488,14 +488,18 @@ pub const Frame = struct {
         };
 
         // Save the current instruction
-        try client.singleStepHook(our_addr, try client.readBytes(our_addr, 4));
+        try save_callback(our_addr, try client.readBytes(our_addr, 4));
 
         // Write the new one
         try client.writeMemory(our_addr, &instr);
     }
 
-    fn hookAddrWithInstr(self: *@This(), addr: u64, instr: [4]u8) !void {
-        return self.hookAddrAtELWithInstr(addr, self.savedEl(), instr);
+    fn swHookWithInstrAtAddr(self: *@This(), addr: u64, instr: [4]u8) !void {
+        return self.hookWithInstrAtAddrForEL(addr, self.savedEl(), instr, client.swBreakpointHook);
+    }
+
+    fn stepHookWithInstrAtAddr(self: *@This(), addr: u64, instr: [4]u8) !void {
+        return self.hookWithInstrAtAddrForEL(addr, self.savedEl(), instr, client.singleStepHook);
     }
 
     fn hookWithInstr(self: *@This(), instr: [4]u8) !void {
@@ -516,8 +520,8 @@ pub const Frame = struct {
             0b10110100, 0b10110101,
             => {
                 const imm = @truncate(u19, curr_instr >> 5);
-                try self.hookAddrWithInstr(calcNextAddr(current_addr, imm), instr);
-                try self.hookAddrWithInstr(current_addr + 4, instr);
+                try self.stepHookWithInstrAtAddr(calcNextAddr(current_addr, imm), instr);
+                try self.stepHookWithInstrAtAddr(current_addr + 4, instr);
             },
 
             // Unconditional branch to register (BR, BLR, RET, ...)
@@ -550,13 +554,13 @@ pub const Frame = struct {
 
                     const debuggee_target_el = spsrSavedEl(debuggee_spsr);
 
-                    try self.hookAddrAtELWithInstr(debuggee_elr, debuggee_target_el, instr);
+                    try self.hookWithInstrAtAddrForEL(debuggee_elr, debuggee_target_el, instr, client.singleStepHook);
                 } else {
                     // Probably just an unconditional branch to the value of Rn
                     // If the register number is 31, that encodes XZR and not SP
                     const reg_val = if (Rn == 31) 0 else (self.getGdbReg(Rn) orelse unreachable).*;
 
-                    try self.hookAddrWithInstr(reg_val, instr);
+                    try self.stepHookWithInstrAtAddr(reg_val, instr);
                 }
             },
 
@@ -566,7 +570,7 @@ pub const Frame = struct {
             0b10010100, 0b10010101, 0b10010110, 0b10010111,
             => {
                 const imm = @truncate(u26, curr_instr);
-                try self.hookAddrWithInstr(calcNextAddr(current_addr, imm), instr);
+                try self.stepHookWithInstrAtAddr(calcNextAddr(current_addr, imm), instr);
             },
 
             // Test and branch to immediate (TB{N,}Z)
@@ -575,38 +579,46 @@ pub const Frame = struct {
             0b10110110, 0b10110111,
             => {
                 const imm = @truncate(u14, curr_instr >> 5);
-                try self.hookAddrWithInstr(calcNextAddr(current_addr, imm), instr);
-                try self.hookAddrWithInstr(current_addr + 4, instr);
+                try self.stepHookWithInstrAtAddr(calcNextAddr(current_addr, imm), instr);
+                try self.stepHookWithInstrAtAddr(current_addr + 4, instr);
             },
 
             // We assume everything that isn't a branch will just end up at PC + 4.
             // I... Think that's correct...?
             else => {
-                try self.hookAddrWithInstr(current_addr + 4, instr);
+                try self.stepHookWithInstrAtAddr(current_addr + 4, instr);
             },
         }
         // zig fmt: on
     }
 
+    fn chooseInstructionForBreakpoint(self: *@This()) [4]u8 {
+        // Oh boy, stepping with a debugger in EL3 is a bit of a mess.
+        // Debug exceptions except BRK are not available. This means that
+        // if we want to trap from a lower EL into EL3, we have to use an
+        // SMC instruction. That's fine and all except for the fact that
+        // they advance the PC by 4 _BEFORE_ triggering the exception
+        // for obvious reasons. That means we have to rewind the PC by 4
+        // on one of these before resuming.
+
+        // First, let's figure out if we're running at EL3 or a lower EL.
+
+        if (self.savedEl() < 3) {
+            // We need to do an `smc` call to get back into the debugger.
+            return .{ 0xA3, 0x8A, 0x14, 0xD4 }; // SMC #42069
+        } else {
+            // We could do either an `smc` or `brk` in struction to get back into the debugger
+            return .{ 0xA0, 0x8A, 0x34, 0xD4 }; // BRK #42069
+        }
+    }
+
+    pub fn setSwBreak(self: *@This(), addr: u64) !void {
+        try self.swHookWithInstrAtAddr(addr, self.chooseInstructionForBreakpoint());
+    }
+
     pub fn doStep(self: *@This(), step: bool) !void {
         if (step and self.debugger_el == 3) {
-            // Oh boy, stepping with a debugger in EL3 is a bit of a mess.
-            // Debug exceptions except BRK are not available. This means that
-            // if we want to trap from a lower EL into EL3, we have to use an
-            // SMC instruction. That's fine and all except for the fact that
-            // they advance the PC by 4 _BEFORE_ triggering the exception
-            // for obvious reasons. That means we have to rewind the PC by 4
-            // on one of these before resuming.
-
-            // First, let's figure out if we're running at EL3 or a lower EL.
-
-            if (self.savedEl() < 3) {
-                // We need to do an `smc` call to get back into the debugger.
-                try self.hookWithInstr(.{ 0xA3, 0x8A, 0x14, 0xD4 }); // SMC #42069
-            } else {
-                // We could do either an `smc` or `brk` in struction to get back into the debugger
-                try self.hookWithInstr(.{ 0xA0, 0x8A, 0x34, 0xD4 }); // BRK #42069
-            }
+            try self.hookWithInstr(self.chooseInstructionForBreakpoint());
         } else {
             const ss_bit: u64 = 1 << 21;
 

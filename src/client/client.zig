@@ -18,6 +18,16 @@ pub fn singleStepHook(addr: u64, current_instr: platform.HookedInstr) !void {
     });
 }
 
+/// Call this when you want to overwrite a software breakpoint.
+/// They are autmatically managed (removed when gdb asks for it etc)
+pub fn swBreakpointHook(addr: u64, current_instr: platform.HookedInstr) !void {
+    std.log.info("Adding software breakpoint at 0x{X}", .{addr});
+    try softwareBreakpointHooks.append(std.heap.page_allocator, .{
+        .replaced_bytes = current_instr,
+        .addr = addr,
+    });
+}
+
 /// Send a command to the device. You may be expected to recieve
 /// or send additional data after this operation.
 pub fn sendDeviceCommand(cmd: proto.Command) !void {
@@ -94,6 +104,7 @@ const Hook = struct {
 };
 
 var singleStepHooks: std.ArrayListUnmanaged(Hook) = .{};
+var softwareBreakpointHooks: std.ArrayListUnmanaged(Hook) = .{};
 
 const minified_target_xml = blk: {
     @setEvalBranchQuota(99999999);
@@ -380,6 +391,33 @@ fn handlePacket(pkt: []const u8, gdb_stream: *gdb.Stream) !void {
             }
         }
         try gdb_stream.send("");
+    }
+
+    else if(std.mem.startsWith(u8, pkt, "Z0")) { // Insert software breakpoint
+        const request = pkt[3..];
+        const comma_idx = std.mem.indexOfScalar(u8, request, ',').?;
+        const addr = try std.fmt.parseUnsigned(usize, request[0..comma_idx], 16);
+
+        try frame.?.setSwBreak(addr);
+
+        try gdb_stream.send("OK");
+    }
+
+    else if(std.mem.startsWith(u8, pkt, "z0")) { // Remove software breakpoint
+        const request = pkt[3..];
+        const comma_idx = std.mem.indexOfScalar(u8, request, ',').?;
+        const addr = try std.fmt.parseUnsigned(usize, request[0..comma_idx], 16);
+
+        for(softwareBreakpointHooks.items) |swbp, i| {
+            if(swbp.addr == addr) {
+                try writeMemory(swbp.addr, &swbp.replaced_bytes);
+                _ = softwareBreakpointHooks.swapRemove(i);
+                try gdb_stream.send("OK");
+                return;
+            }
+        }
+
+        try gdb_stream.send("E00");
     }
 
     else if(std.mem.eql(u8, pkt, "g")) { // Read registers list
