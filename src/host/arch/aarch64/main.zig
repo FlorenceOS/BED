@@ -83,7 +83,7 @@ fn fillStruct(s_ptr: anytype) callconv(.Inline) void {
     const T = @TypeOf(s_ptr.*);
 
     inline for (@typeInfo(T).Struct.fields) |f| {
-        const value = asm ("MRS %[reg], " ++ f.name ++ T.msr_postfix ++ "\n"
+        const value = asm ("MRS %[reg], " ++ f.name ++ "\n"
             : [reg] "=r" (-> f.field_type)
         );
         @field(s_ptr.*, f.name) = value;
@@ -100,7 +100,7 @@ fn applyStruct(s: anytype) callconv(.Inline) void {
 
     inline for (@typeInfo(T).Struct.fields) |f| {
         const value = @field(copy, f.name);
-        _ = asm volatile ("MSR " ++ f.name ++ T.msr_postfix ++ ", %[reg]\n"
+        _ = asm volatile ("MSR " ++ f.name ++ ", %[reg]\n"
             : [val] "=r" (-> u64)
             : [reg] "r" (value)
         );

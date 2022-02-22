@@ -7,75 +7,69 @@ pub const FrameHeader = extern struct {
 };
 
 pub const EL3Regs = extern struct {
-    pub const msr_postfix = "_EL3";
-
     // Exception handling
-    ELR: u64,
-    SPSR: u64,
-    FAR: u64,
-    ESR: u64,
+    ELR_EL3: u64,
+    SPSR_EL3: u64,
+    FAR_EL3: u64,
+    ESR_EL3: u64,
 
     // Paging
-    TTBR0: u64,
-    TCR: u64,
-    MAIR: u64,
+    TTBR0_EL3: u64,
+    TCR_EL3: u64,
+    MAIR_EL3: u64,
 
     // System control
-    SCTLR: u64,
+    SCTLR_EL3: u64,
 
     // Secure monitor
-    SCR: u64,
+    SCR_EL3: u64,
 };
 
 pub const EL2Regs = extern struct {
-    pub const msr_postfix = "_EL2";
-
     // Exception handling
-    ELR: u64,
-    SPSR: u64,
-    FAR: u64,
-    ESR: u64,
+    ELR_EL2: u64,
+    SPSR_EL2: u64,
+    FAR_EL2: u64,
+    ESR_EL2: u64,
 
     // Paging
-    TTBR0: u64,
-    TCR: u64,
-    MAIR: u64,
+    TTBR0_EL2: u64,
+    TCR_EL2: u64,
+    MAIR_EL2: u64,
 
     // System control
-    SCTLR: u64,
+    SCTLR_EL2: u64,
 
     // Hypervisor control
-    HCR: u64,
-    CPTR: u64,
-    HSTR: u64,
+    HCR_EL2: u64,
+    CPTR_EL2: u64,
+    HSTR_EL2: u64,
 
     // Hypervisor timer control
-    CNTHCTL: u64,
-    CNTVOFF: u64,
+    CNTHCTL_EL2: u64,
+    CNTVOFF_EL2: u64,
 
     // Hypervisor guest paging
-    //VTTBR0: u64,
-    VTCR: u64,
+    //VTTBR0_EL2: u64,
+    VTCR_EL2: u64,
 };
 
 pub const EL1Regs = extern struct {
-    pub const msr_postfix = "_EL1";
-
     // Exception handling
-    ELR: u64,
-    SPSR: u64,
-    FAR: u64,
-    ESR: u64,
+    ELR_EL1: u64,
+    SPSR_EL1: u64,
+    FAR_EL1: u64,
+    ESR_EL1: u64,
 
     // Paging
-    TTBR0: u64,
-    TTBR1: u64,
-    TCR: u64,
-    MAIR: u64,
+    TTBR0_EL1: u64,
+    TTBR1_EL1: u64,
+    TCR_EL1: u64,
+    MAIR_EL1: u64,
 
     // System control
-    SCTLR: u64,
-    CPACR: u64,
+    SCTLR_EL1: u64,
+    CPACR_EL1: u64,
 };
 
 pub const GPRs = extern struct {

@@ -267,9 +267,9 @@ pub const Frame = struct {
 
     pub fn pagingEnabled(self: *@This(), el: u2) bool {
         switch (el) {
-            0, 1 => return @truncate(u1, self.el1.SCTLR) == 1,
-            2 => return @truncate(u1, self.el2.SCTLR) == 1,
-            3 => return @truncate(u1, self.el3.SCTLR) == 1,
+            0, 1 => return @truncate(u1, self.el1.SCTLR_EL1) == 1,
+            2 => return @truncate(u1, self.el2.SCTLR_EL2) == 1,
+            3 => return @truncate(u1, self.el3.SCTLR_EL3) == 1,
         }
     }
 
@@ -343,22 +343,22 @@ pub const Frame = struct {
     } {
         return switch (self.debugger_el) {
             1 => .{
-                .ESR = &self.el1.ESR,
-                .ELR = &self.el1.ELR,
-                .FAR = &self.el1.FAR,
-                .SPSR = &self.el1.SPSR,
+                .ESR = &self.el1.ESR_EL1,
+                .ELR = &self.el1.ELR_EL1,
+                .FAR = &self.el1.FAR_EL1,
+                .SPSR = &self.el1.SPSR_EL1,
             },
             2 => .{
-                .ESR = &self.el2.ESR,
-                .ELR = &self.el2.ELR,
-                .FAR = &self.el2.FAR,
-                .SPSR = &self.el2.SPSR,
+                .ESR = &self.el2.ESR_EL2,
+                .ELR = &self.el2.ELR_EL2,
+                .FAR = &self.el2.FAR_EL2,
+                .SPSR = &self.el2.SPSR_EL2,
             },
             3 => .{
-                .ESR = &self.el3.ESR,
-                .ELR = &self.el3.ELR,
-                .FAR = &self.el3.FAR,
-                .SPSR = &self.el3.SPSR,
+                .ESR = &self.el3.ESR_EL3,
+                .ELR = &self.el3.ELR_EL3,
+                .FAR = &self.el3.FAR_EL3,
+                .SPSR = &self.el3.SPSR_EL3,
             },
             else => unreachable,
         };
@@ -447,47 +447,47 @@ pub const Frame = struct {
                 return &self.fake_cpsr;
             },
 
-            34 => if (self.debugger_el < 3) null else &self.el3.ELR,
-            35 => if (self.debugger_el < 3) null else &self.el3.SPSR,
-            36 => if (self.debugger_el < 3) null else &self.el3.FAR,
-            37 => if (self.debugger_el < 3) null else &self.el3.ESR,
+            34 => if (self.debugger_el < 3) null else &self.el3.ELR_EL3,
+            35 => if (self.debugger_el < 3) null else &self.el3.SPSR_EL3,
+            36 => if (self.debugger_el < 3) null else &self.el3.FAR_EL3,
+            37 => if (self.debugger_el < 3) null else &self.el3.ESR_EL3,
 
-            38 => if (self.debugger_el < 2) null else &self.el2.ESR,
-            39 => if (self.debugger_el < 2) null else &self.el2.SPSR,
-            40 => if (self.debugger_el < 2) null else &self.el2.FAR,
-            41 => if (self.debugger_el < 2) null else &self.el2.ESR,
+            38 => if (self.debugger_el < 2) null else &self.el2.ESR_EL2,
+            39 => if (self.debugger_el < 2) null else &self.el2.SPSR_EL2,
+            40 => if (self.debugger_el < 2) null else &self.el2.FAR_EL2,
+            41 => if (self.debugger_el < 2) null else &self.el2.ESR_EL2,
 
-            42 => if (self.debugger_el < 1) null else &self.el1.ESR,
-            43 => if (self.debugger_el < 1) null else &self.el1.SPSR,
-            44 => if (self.debugger_el < 1) null else &self.el1.FAR,
-            45 => if (self.debugger_el < 1) null else &self.el1.ESR,
+            42 => if (self.debugger_el < 1) null else &self.el1.ESR_EL1,
+            43 => if (self.debugger_el < 1) null else &self.el1.SPSR_EL1,
+            44 => if (self.debugger_el < 1) null else &self.el1.FAR_EL1,
+            45 => if (self.debugger_el < 1) null else &self.el1.ESR_EL1,
 
-            46 => if (self.debugger_el < 3) null else &self.el3.TTBR0,
-            47 => if (self.debugger_el < 3) null else &self.el3.TCR,
-            48 => if (self.debugger_el < 3) null else &self.el3.MAIR,
+            46 => if (self.debugger_el < 3) null else &self.el3.TTBR0_EL3,
+            47 => if (self.debugger_el < 3) null else &self.el3.TCR_EL3,
+            48 => if (self.debugger_el < 3) null else &self.el3.MAIR_EL3,
 
-            49 => if (self.debugger_el < 2) null else &self.el2.TTBR0,
-            50 => if (self.debugger_el < 2) null else &self.el2.TCR,
-            51 => if (self.debugger_el < 2) null else &self.el2.MAIR,
+            49 => if (self.debugger_el < 2) null else &self.el2.TTBR0_EL2,
+            50 => if (self.debugger_el < 2) null else &self.el2.TCR_EL2,
+            51 => if (self.debugger_el < 2) null else &self.el2.MAIR_EL2,
 
-            52 => if (self.debugger_el < 1) null else &self.el1.TTBR0,
-            53 => if (self.debugger_el < 1) null else &self.el1.TTBR1,
-            54 => if (self.debugger_el < 1) null else &self.el1.TCR,
-            55 => if (self.debugger_el < 1) null else &self.el1.MAIR,
+            52 => if (self.debugger_el < 1) null else &self.el1.TTBR0_EL1,
+            53 => if (self.debugger_el < 1) null else &self.el1.TTBR1_EL1,
+            54 => if (self.debugger_el < 1) null else &self.el1.TCR_EL1,
+            55 => if (self.debugger_el < 1) null else &self.el1.MAIR_EL1,
 
-            56 => if (self.debugger_el < 3) null else &self.el3.SCTLR,
-            57 => if (self.debugger_el < 3) null else &self.el3.SCR,
+            56 => if (self.debugger_el < 3) null else &self.el3.SCTLR_EL3,
+            57 => if (self.debugger_el < 3) null else &self.el3.SCR_EL3,
 
-            58 => if (self.debugger_el < 2) null else &self.el2.SCTLR,
-            59 => if (self.debugger_el < 2) null else &self.el2.HCR,
-            60 => if (self.debugger_el < 2) null else &self.el2.CPTR,
-            61 => if (self.debugger_el < 2) null else &self.el2.HSTR,
-            62 => if (self.debugger_el < 2) null else &self.el2.CNTHCTL,
-            63 => if (self.debugger_el < 2) null else &self.el2.CNTVOFF,
-            64 => if (self.debugger_el < 2) null else &self.el2.VTCR,
+            58 => if (self.debugger_el < 2) null else &self.el2.SCTLR_EL2,
+            59 => if (self.debugger_el < 2) null else &self.el2.HCR_EL2,
+            60 => if (self.debugger_el < 2) null else &self.el2.CPTR_EL2,
+            61 => if (self.debugger_el < 2) null else &self.el2.HSTR_EL2,
+            62 => if (self.debugger_el < 2) null else &self.el2.CNTHCTL_EL2,
+            63 => if (self.debugger_el < 2) null else &self.el2.CNTVOFF_EL2,
+            64 => if (self.debugger_el < 2) null else &self.el2.VTCR_EL2,
 
-            65 => if (self.debugger_el < 1) null else &self.el1.SCTLR,
-            66 => if (self.debugger_el < 1) null else &self.el1.CPACR,
+            65 => if (self.debugger_el < 1) null else &self.el1.SCTLR_EL1,
+            66 => if (self.debugger_el < 1) null else &self.el1.CPACR_EL1,
 
             else => null,
         };
@@ -557,16 +557,16 @@ pub const Frame = struct {
                             std.log.err("EL0 can't ERET!", .{});
                             return;
                         },
-                        1 => self.el1.ELR,
-                        2 => self.el2.ELR,
-                        3 => self.el3.ELR,
+                        1 => self.el1.ELR_EL1,
+                        2 => self.el2.ELR_EL2,
+                        3 => self.el3.ELR_EL3,
                     };
 
                     const debuggee_spsr = switch (self.savedEl()) {
                         0 => unreachable,
-                        1 => self.el1.SPSR,
-                        2 => self.el2.SPSR,
-                        3 => self.el3.SPSR,
+                        1 => self.el1.SPSR_EL1,
+                        2 => self.el2.SPSR_EL2,
+                        3 => self.el3.SPSR_EL3,
                     };
 
                     const debuggee_target_el = spsrSavedEl(debuggee_spsr);
