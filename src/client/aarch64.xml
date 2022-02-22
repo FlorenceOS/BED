@@ -105,7 +105,7 @@
 
     <!-- Everything else EL1 -->
     <reg name="SCTLR_EL1" bitsize="64" regnum="65" group="sys-regs-el1"/>
-    <reg name="CPACR_EL1" bitsize="64" regnum="66" group="sys-regs-el1"/>
+    <reg name="CPACR_EL1" bitsize="64" regnum="66" group="sys-regs-el2"/>
   </feature>
   <!-- FPU omitted for now -->
 </target>

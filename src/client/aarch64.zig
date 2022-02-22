@@ -487,7 +487,7 @@ pub const Frame = struct {
             64 => if (self.debugger_el < 2) null else &self.el2.VTCR_EL2,
 
             65 => if (self.debugger_el < 1) null else &self.el1.SCTLR_EL1,
-            66 => if (self.debugger_el < 1) null else &self.el1.CPACR_EL1,
+            66 => if (self.debugger_el < 2) null else &self.el2.CPACR_EL1,
 
             else => null,
         };

@@ -44,6 +44,7 @@ pub const EL2Regs = extern struct {
     HCR_EL2: u64,
     CPTR_EL2: u64,
     HSTR_EL2: u64,
+    CPACR_EL1: u64,
 
     // Hypervisor timer control
     CNTHCTL_EL2: u64,
@@ -69,7 +70,6 @@ pub const EL1Regs = extern struct {
 
     // System control
     SCTLR_EL1: u64,
-    CPACR_EL1: u64,
 };
 
 pub const GPRs = extern struct {
