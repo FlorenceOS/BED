@@ -384,7 +384,7 @@ fn handlePacket(pkt: []const u8, gdb_stream: *gdb.Stream) !void {
             std.debug.assert(size == @divExact(data.len, 2));
             while(i < size * 2) : (i += 2) {
                 const b = std.fmt.parseUnsigned(u8, data[i..][0..2], 16) catch |err| blk: {
-                    std.log.crit("Cannot parse hex encoded byte '{s}' in M packet. Error: {}!", .{data[i..][0..2], err});
+                    std.log.err("Cannot parse hex encoded byte '{s}' in M packet. Error: {}!", .{data[i..][0..2], err});
                     break :blk 0xAA;
                 };
                 try device_writer.writeByte(b);
