@@ -274,11 +274,15 @@ pub const Frame = struct {
     }
 
     pub fn pageSize(self: *@This(), addr: u64) usize {
-        switch (self.savedEl()) {
-            0, 1 => return calcPageSize(self.el1.TCR, addr),
-            2 => return calcPageSize(self.el2.TCR, addr),
-            3 => return calcPageSize(self.el3.TCR, addr),
-        }
+        // @TODO
+        _ = self;
+        _ = addr;
+        return 0x1000;
+        //switch (self.savedEl()) {
+        //    0, 1 => return calcPageSize(self.el1.TCR, addr),
+        //    2 => return calcPageSize(self.el2.TCR, addr),
+        //    3 => return calcPageSize(self.el3.TCR, addr),
+        //}
     }
 
     fn addrForOpAtEL(self: *@This(), vaddr: u64, other_el: u2, op: client.RW) !u64 {
